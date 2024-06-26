@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waste Classification</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f0f0;
+    }
+    .container {
+        max-width: 600px;
+        margin: 10px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    h1 {
+        color: #333;
+    }
+    p {
+        color: #666;
+        margin-bottom: 20px;
+    }
+    input[type="file"] {
+        display: none;
+    }
+    label {
+        background-color: #007bff;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    label:hover {
+        background-color: #0056b3;
+    }
+    #imagePreview {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        width: 650px;
+        height: 450px;
+        border: 1px solid black;
+        margin-left: auto;
+        margin-right: auto;
+        border-radius: 10px;
+        opacity: 0;
+    }
+    #imagePreview img {
+        height: 100%;
+        width: 100%;
+        background-size: cover;
+        border-radius: 10px;
+    }
+
+#result{
+    position: fixed;
+    top: 50%;
+    left: 20px;
+    height: 150px;
+    width: 300px;
+    opacity: 1;
+    font-size: 32px;
+    display: flex;
+    flex-direction: column;
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Waste Classification</h1>
+    <p style="margin-bottom: 40px;">
+        Please upload your image and I will predict if
+         it is Organic  or Recyclable waste
+    </p>
+    <label for="uploadInput">Upload Image</label>
+    <input type="file" id="uploadInput" accept="image/*">
+</div>
+<div id="imagePreview"></div>
+<div id="result">
+
+</div>
+<script>
+    document.getElementById('uploadInput').addEventListener('change', function(e) {
+        var file = e.target.files[0];
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('result').innerHTML = '';
+            var imagePreview = document.getElementById('imagePreview');
+            imagePreview.style.opacity = 1;
+            imagePreview.innerHTML = ''; // Clear previous image if any
+            var img = document.createElement('img');
+            img.src = e.target.result;
+           
+
+        var formData = new FormData();
+        formData.append('file', dataURLtoFile(e.target.result, 'image.jpg'));
+        
+
+        fetch('http://127.0.0.1:5000/upload', { method: 'POST', body: formData})
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+        // Display classification result
+        var resultDiv = document.getElementById('result');
+        resultDiv.style.opacity = 1;
+
+        var predictionText = data.class === 'O' ? 'Predicted class is: Organic' : 'Predicted class is: Recyclable';
+        var predictionTextElement = document.createElement('p');
+        predictionTextElement.textContent = predictionText;
+
+        var predictionValueElement = document.createElement('p');
+        predictionValueElement.textContent = 'Prediction Value: ' + data.value;
+
+        resultDiv.appendChild(predictionTextElement);
+        resultDiv.appendChild(predictionValueElement);
+        imagePreview.appendChild(img);
+    })
+
+
+        }
+        reader.readAsDataURL(file);
+    });
+
+    function dataURLtoFile(dataUrl, filename) {
+    var arr = dataUrl.split(',');
+    var mime = arr[0].match(/:(.*?);/)[1];
+    var bstr = atob(arr[1]);
+    var n = bstr.length;
+    var u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+}
+</script>
+</body>
+</html>
